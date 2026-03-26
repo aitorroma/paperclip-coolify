@@ -67,4 +67,4 @@ VOLUME ["/paperclip"]
 EXPOSE 3100
 
 USER node
-CMD ["node", "--import", "./server/node_modules/tsx/dist/loader.mjs", "server/dist/index.js"]
+CMD ["sh", "-lc", "PUBLIC_URL=\"${PAPERCLIP_PUBLIC_URL:-}\"; if [ -z \"$PUBLIC_URL\" ] && [ -n \"${SERVICE_FQDN_SERVER_3100:-}\" ]; then PUBLIC_URL=\"https://${SERVICE_FQDN_SERVER_3100}\"; fi; if [ -z \"$PUBLIC_URL\" ] && [ -n \"${SERVICE_FQDN_SERVER:-}\" ]; then PUBLIC_URL=\"https://${SERVICE_FQDN_SERVER}\"; fi; if [ -n \"$PUBLIC_URL\" ]; then ALLOWED_HOSTNAME=$(printf '%s' \"$PUBLIC_URL\" | sed -E 's#^[a-zA-Z]+://##; s#/.*$##; s/:.*$##'); if [ -n \"$ALLOWED_HOSTNAME\" ]; then pnpm paperclipai allowed-hostname \"$ALLOWED_HOSTNAME\" || true; fi; fi; node --import ./server/node_modules/tsx/dist/loader.mjs server/dist/index.js"]
