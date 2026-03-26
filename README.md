@@ -29,7 +29,7 @@ Deploy Paperclip on Coolify from a public Git repository using the Docker Compos
 
 ## Optional Environment Variables
 
-- `PAPERCLIP_REF`: branch, tag, or commit to build from the upstream Paperclip repository. Default: `main`
+- `PAPERCLIP_REF`: branch, tag, or commit to build from the upstream Paperclip repository. Default: upstream default branch
 - `PAPERCLIP_REPOSITORY`: upstream Paperclip Git URL. Default: `https://github.com/paperclipai/paperclip.git`
 - `POSTGRES_USER`: database username. Default: `paperclip`
 - `POSTGRES_DB`: database name. Default: `paperclip`
