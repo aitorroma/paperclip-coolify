@@ -11,8 +11,7 @@ ARG PAPERCLIP_REF=
 RUN if [ -n "$PAPERCLIP_REF" ]; then \
     git init . \
     && git remote add origin "$PAPERCLIP_REPOSITORY" \
-    && git fetch --depth=1 origin "$PAPERCLIP_REF" \
-    && git checkout FETCH_HEAD; \
+    && (git fetch --depth=1 origin "$PAPERCLIP_REF" && git checkout FETCH_HEAD || (rm -rf .git && git clone --depth=1 "$PAPERCLIP_REPOSITORY" .)); \
   else \
     git clone --depth=1 "$PAPERCLIP_REPOSITORY" .; \
   fi
