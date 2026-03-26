@@ -31,6 +31,35 @@ extract_hostname() {
   node -p "new URL(process.argv[1]).hostname" "$1" 2>/dev/null
 }
 
+sync_config_public_url() {
+  local public_url="$1"
+  local config_path="/paperclip/instances/default/config.json"
+
+  if [[ ! -f "$config_path" ]]; then
+    return 0
+  fi
+
+  node - "$config_path" "$public_url" <<'EOF'
+const fs = require('fs');
+
+const configPath = process.argv[2];
+const publicUrl = process.argv[3];
+const hostname = new URL(publicUrl).hostname;
+
+const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+config.auth ??= {};
+config.auth.publicBaseUrl = publicUrl;
+
+const trustedOrigins = new Set(Array.isArray(config.auth.trustedOrigins) ? config.auth.trustedOrigins : []);
+trustedOrigins.add(publicUrl);
+trustedOrigins.add(`http://${hostname}`);
+trustedOrigins.add(`https://${hostname}`);
+config.auth.trustedOrigins = Array.from(trustedOrigins);
+
+fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
+EOF
+}
+
 resolve_public_url() {
   local candidate
 
@@ -94,6 +123,7 @@ main() {
   if public_url="$(resolve_public_url)"; then
     export PAPERCLIP_PUBLIC_URL="$public_url"
     log_info "public url: ${CYAN}${public_url}${RESET}"
+    sync_config_public_url "$public_url"
 
     allowed_hostname="$(extract_hostname "$public_url")"
     if [[ -n "$allowed_hostname" ]]; then
