@@ -19,6 +19,10 @@ log_error() {
   printf '%s[paperclip-init]%s %s\n' "$RED" "$RESET" "$1"
 }
 
+log_url() {
+  printf '%s[paperclip-init]%s %s%s%s\n' "$GREEN" "$RESET" "$CYAN" "$1" "$RESET"
+}
+
 is_valid_url() {
   node -e "new URL(process.argv[1]); process.exit(0)" "$1" >/dev/null 2>&1
 }
@@ -50,6 +54,7 @@ resolve_public_url() {
 
 bootstrap_ceo() {
   local bootstrap_output=""
+  local bootstrap_url=""
 
   if [[ "${PAPERCLIP_AUTO_BOOTSTRAP_CEO:-true}" != "true" ]]; then
     return 0
@@ -69,7 +74,12 @@ bootstrap_ceo() {
   bootstrap_output="$(pnpm paperclipai auth bootstrap-ceo 2>&1 || true)"
   printf '%s\n' "$bootstrap_output" | tee /paperclip/bootstrap-ceo-url.txt >/dev/null
   log_ok "bootstrap CEO output saved to ${CYAN}/paperclip/bootstrap-ceo-url.txt${RESET}"
-  printf '%s\n' "$bootstrap_output" | sed "s#^#${GREEN}[paperclip-init]${RESET} #"
+  bootstrap_url="$(printf '%s\n' "$bootstrap_output" | grep -Eo 'https://[^[:space:]]+' | tail -n 1 || true)"
+  if [[ -n "$bootstrap_url" ]]; then
+    log_url "$bootstrap_url"
+  else
+    printf '%s\n' "$bootstrap_output" | sed "s#^#${GREEN}[paperclip-init]${RESET} #"
+  fi
 }
 
 main() {
@@ -88,7 +98,7 @@ main() {
     allowed_hostname="$(extract_hostname "$public_url")"
     if [[ -n "$allowed_hostname" ]]; then
       log_info "allowing hostname: ${CYAN}${allowed_hostname}${RESET}"
-      pnpm paperclipai allowed-hostname "$allowed_hostname" || true
+      pnpm paperclipai allowed-hostname "$allowed_hostname" >/dev/null 2>&1 || true
     fi
   else
     unset PAPERCLIP_PUBLIC_URL || true
