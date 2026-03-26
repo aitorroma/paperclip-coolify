@@ -1,12 +1,13 @@
 services:
   db:
     image: postgres:17-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: paperclip
-      POSTGRES_PASSWORD: paperclip
-      POSTGRES_DB: paperclip
+      POSTGRES_USER: ${POSTGRES_USER:-paperclip}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-${SERVICE_PASSWORD_PG}}
+      POSTGRES_DB: ${POSTGRES_DB:-paperclip}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U paperclip -d paperclip"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 2s
       timeout: 5s
       retries: 30
@@ -17,16 +18,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "3100:3100"
+      args:
+        # Optional: pin the upstream Paperclip branch/tag/commit from Coolify env vars.
+        PAPERCLIP_REPOSITORY: ${PAPERCLIP_REPOSITORY:-https://github.com/paperclipai/paperclip.git}
+        PAPERCLIP_REF: ${PAPERCLIP_REF:-main}
+    restart: unless-stopped
+    expose:
+      - "3100"
     environment:
-      DATABASE_URL: postgres://paperclip:paperclip@db:5432/paperclip
-      PORT: "3100"
+      # Coolify generates these values automatically when not set manually.
+      DATABASE_URL: postgres://${POSTGRES_USER:-paperclip}:${POSTGRES_PASSWORD:-${SERVICE_PASSWORD_PG}}@db:5432/${POSTGRES_DB:-paperclip}
+      HOST: "0.0.0.0"
+      PORT: ${PORT:-3100}
       SERVE_UI: "true"
       PAPERCLIP_DEPLOYMENT_MODE: "authenticated"
       PAPERCLIP_DEPLOYMENT_EXPOSURE: "private"
-      PAPERCLIP_PUBLIC_URL: "${PAPERCLIP_PUBLIC_URL:-https://paperclip.stratomai.com}"
-      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET}"
+      PAPERCLIP_PUBLIC_URL: ${SERVICE_URL_SERVER_3100}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-${SERVICE_BASE64_64_AUTH}}
     volumes:
       - paperclip-data:/paperclip
     depends_on:

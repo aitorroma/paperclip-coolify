@@ -6,7 +6,12 @@ RUN corepack enable
 
 FROM base AS source
 WORKDIR /app
-RUN git clone --depth=1 https://github.com/paperclipai/paperclip.git .
+ARG PAPERCLIP_REPOSITORY=https://github.com/paperclipai/paperclip.git
+ARG PAPERCLIP_REF=main
+RUN git init . \
+  && git remote add origin "$PAPERCLIP_REPOSITORY" \
+  && git fetch --depth=1 origin "$PAPERCLIP_REF" \
+  && git checkout FETCH_HEAD
 
 FROM base AS deps
 WORKDIR /app
