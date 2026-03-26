@@ -81,6 +81,41 @@ resolve_public_url() {
   return 1
 }
 
+allow_hostname() {
+  local hostname="$1"
+
+  if [[ -z "$hostname" ]]; then
+    return 0
+  fi
+
+  log_info "allowing hostname: ${CYAN}${hostname}${RESET}"
+  pnpm paperclipai allowed-hostname "$hostname" >/dev/null 2>&1 || true
+}
+
+allow_known_hostnames() {
+  local public_url="$1"
+  local hostname=""
+  local extra=""
+  local seen=""
+
+  for extra in "$public_url" "${SERVICE_URL_SERVER:-}" "${COOLIFY_URL:-}"; do
+    if [[ -n "$extra" ]] && is_valid_url "$extra"; then
+      hostname="$(extract_hostname "$extra")"
+      if [[ -n "$hostname" ]] && [[ " $seen " != *" $hostname "* ]]; then
+        allow_hostname "$hostname"
+        seen="$seen $hostname"
+      fi
+    fi
+  done
+
+  for hostname in "${SERVICE_FQDN_SERVER:-}" "${COOLIFY_FQDN:-}"; do
+    if [[ -n "$hostname" ]] && [[ " $seen " != *" $hostname "* ]]; then
+      allow_hostname "$hostname"
+      seen="$seen $hostname"
+    fi
+  done
+}
+
 bootstrap_ceo() {
   local bootstrap_output=""
   local bootstrap_url=""
@@ -113,7 +148,6 @@ bootstrap_ceo() {
 
 main() {
   local public_url=""
-  local allowed_hostname=""
 
   if [[ ! -f /paperclip/instances/default/config.json ]]; then
     log_info "running onboard -y"
@@ -124,12 +158,7 @@ main() {
     export PAPERCLIP_PUBLIC_URL="$public_url"
     log_info "public url: ${CYAN}${public_url}${RESET}"
     sync_config_public_url "$public_url"
-
-    allowed_hostname="$(extract_hostname "$public_url")"
-    if [[ -n "$allowed_hostname" ]]; then
-      log_info "allowing hostname: ${CYAN}${allowed_hostname}${RESET}"
-      pnpm paperclipai allowed-hostname "$allowed_hostname" >/dev/null 2>&1 || true
-    fi
+    allow_known_hostnames "$public_url"
   else
     unset PAPERCLIP_PUBLIC_URL || true
     log_error "no valid public URL found. Set ${CYAN}PAPERCLIP_PUBLIC_URL${RESET} or configure the Coolify service URL."
