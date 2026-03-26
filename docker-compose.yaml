@@ -21,7 +21,7 @@ services:
       args:
         # Optional: pin the upstream Paperclip branch/tag/commit from Coolify env vars.
         PAPERCLIP_REPOSITORY: ${PAPERCLIP_REPOSITORY:-https://github.com/paperclipai/paperclip.git}
-        PAPERCLIP_REF: ${PAPERCLIP_REF:-main}
+        PAPERCLIP_REF: ${PAPERCLIP_REF:-}
     restart: unless-stopped
     expose:
       - "3100"
