@@ -63,7 +63,7 @@ EOF
 resolve_public_url() {
   local candidate
 
-  for candidate in "${PAPERCLIP_PUBLIC_URL:-}" "${SERVICE_URL_SERVER:-}"; do
+  for candidate in "${PAPERCLIP_PUBLIC_URL:-}" "${SERVICE_URL_SERVER:-}" "${COOLIFY_URL:-}"; do
     if [[ -n "$candidate" ]] && is_valid_url "$candidate"; then
       printf '%s' "$candidate"
       return 0
