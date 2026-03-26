@@ -25,21 +25,15 @@ COPY --from=source /app/packages/adapters/openclaw-gateway/package.json packages
 COPY --from=source /app/packages/adapters/opencode-local/package.json packages/adapters/opencode-local/
 COPY --from=source /app/packages/adapters/pi-local/package.json packages/adapters/pi-local/
 COPY --from=source /app/packages/plugins/sdk/package.json packages/plugins/sdk/
-COPY --from=source /app/packages/plugins/create-paperclip-plugin/package.json packages/plugins/create-paperclip-plugin/
-COPY --from=source /app/packages/plugins/examples/plugin-authoring-smoke-example/package.json packages/plugins/examples/plugin-authoring-smoke-example/
-COPY --from=source /app/packages/plugins/examples/plugin-file-browser-example/package.json packages/plugins/examples/plugin-file-browser-example/
-COPY --from=source /app/packages/plugins/examples/plugin-hello-world-example/package.json packages/plugins/examples/plugin-hello-world-example/
-COPY --from=source /app/packages/plugins/examples/plugin-kitchen-sink-example/package.json packages/plugins/examples/plugin-kitchen-sink-example/
+COPY --from=source /app/patches/ patches/
 RUN pnpm install --frozen-lockfile
 
 FROM base AS build
 WORKDIR /app
 COPY --from=deps /app /app
 COPY --from=source /app .
-# Build in dependency order: shared → plugin-sdk → ui + server
-RUN pnpm --filter @paperclipai/shared build
-RUN pnpm --filter @paperclipai/plugin-sdk build
 RUN pnpm --filter @paperclipai/ui build
+RUN pnpm --filter @paperclipai/plugin-sdk build
 RUN pnpm --filter @paperclipai/server build
 RUN test -f server/dist/index.js || (echo "ERROR: server build output missing" && exit 1)
 
