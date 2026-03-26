@@ -48,9 +48,11 @@ RUN test -f server/dist/index.js || (echo "ERROR: server build output missing" &
 FROM base AS production
 WORKDIR /app
 COPY --chown=node:node --from=build /app /app
+COPY --chown=node:node start.sh /app/start.sh
 RUN npm install --global --omit=dev @anthropic-ai/claude-code@latest @openai/codex@latest opencode-ai \
   && mkdir -p /paperclip \
   && chown node:node /paperclip \
+  && chmod +x /app/start.sh \
   && chsh -s /bin/bash node
 
 ENV NODE_ENV=production \
@@ -68,4 +70,4 @@ VOLUME ["/paperclip"]
 EXPOSE 3100
 
 USER node
-CMD ["sh", "-lc", "GREEN=$(printf '\\033[1;32m'); YELLOW=$(printf '\\033[1;33m'); CYAN=$(printf '\\033[1;36m'); RESET=$(printf '\\033[0m'); PUBLIC_URL=\"${PAPERCLIP_PUBLIC_URL:-}\"; if [ -z \"$PUBLIC_URL\" ] && [ -n \"${SERVICE_URL_SERVER:-}\" ]; then PUBLIC_URL=\"${SERVICE_URL_SERVER}\"; fi; if [ -z \"$PUBLIC_URL\" ] && [ -n \"${SERVICE_FQDN_SERVER:-}\" ]; then PUBLIC_URL=\"https://${SERVICE_FQDN_SERVER}\"; fi; if [ ! -f /paperclip/instances/default/config.json ]; then printf '%s[paperclip-init]%s running onboard -y\n' \"$YELLOW\" \"$RESET\"; pnpm paperclipai onboard -y || true; fi; if [ -n \"$PUBLIC_URL\" ]; then printf '%s[paperclip-init]%s public url: %s%s%s\n' \"$YELLOW\" \"$RESET\" \"$CYAN\" \"$PUBLIC_URL\" \"$RESET\"; ALLOWED_HOSTNAME=$(printf '%s' \"$PUBLIC_URL\" | sed -E 's#^[a-zA-Z]+://##; s#/.*$##; s/:.*$##'); if [ -n \"$ALLOWED_HOSTNAME\" ]; then printf '%s[paperclip-init]%s allowing hostname: %s%s%s\n' \"$YELLOW\" \"$RESET\" \"$CYAN\" \"$ALLOWED_HOSTNAME\" \"$RESET\"; pnpm paperclipai allowed-hostname \"$ALLOWED_HOSTNAME\" || true; fi; fi; node --import ./server/node_modules/tsx/dist/loader.mjs server/dist/index.js & SERVER_PID=$!; if [ \"${PAPERCLIP_AUTO_BOOTSTRAP_CEO:-true}\" = \"true\" ] && [ ! -f /paperclip/bootstrap-ceo-url.txt ]; then for i in $(seq 1 60); do if curl -fsS \"http://127.0.0.1:${PORT:-3100}/\" >/dev/null 2>&1; then break; fi; sleep 2; done; BOOTSTRAP_OUTPUT=$(pnpm paperclipai auth bootstrap-ceo 2>&1 || true); printf '%s\n' \"$BOOTSTRAP_OUTPUT\" | tee /paperclip/bootstrap-ceo-url.txt; printf '%s[paperclip-init]%s bootstrap CEO output saved to %s/paperclip/bootstrap-ceo-url.txt%s\n' \"$GREEN\" \"$RESET\" \"$CYAN\" \"$RESET\"; printf '%s\n' \"$BOOTSTRAP_OUTPUT\" | sed \"s#^#${GREEN}[paperclip-init]${RESET} #\"; fi; wait $SERVER_PID"]
+CMD ["/app/start.sh"]
