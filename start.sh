@@ -156,11 +156,13 @@ main() {
 
   if public_url="$(resolve_public_url)"; then
     export PAPERCLIP_PUBLIC_URL="$public_url"
+    export BETTER_AUTH_BASE_URL="$public_url"
     log_info "public url: ${CYAN}${public_url}${RESET}"
     sync_config_public_url "$public_url"
     allow_known_hostnames "$public_url"
   else
     unset PAPERCLIP_PUBLIC_URL || true
+    unset BETTER_AUTH_BASE_URL || true
     log_error "no valid public URL found. Set ${CYAN}PAPERCLIP_PUBLIC_URL${RESET} or configure the Coolify service URL."
   fi
 
