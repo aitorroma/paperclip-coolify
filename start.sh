@@ -20,7 +20,7 @@ log_error() {
 }
 
 log_url() {
-  printf '%s[paperclip-init]%s %s%s%s\n' "$GREEN" "$RESET" "$CYAN" "$1" "$RESET"
+  printf '%s[paperclip-init][BOOTSTRAP URL]%s %s%s%s\n' "$GREEN" "$RESET" "$CYAN" "$1" "$RESET"
 }
 
 is_valid_url() {
@@ -102,7 +102,7 @@ bootstrap_ceo() {
 
   bootstrap_output="$(pnpm paperclipai auth bootstrap-ceo 2>&1 || true)"
   printf '%s\n' "$bootstrap_output" | tee /paperclip/bootstrap-ceo-url.txt >/dev/null
-  log_ok "bootstrap CEO output saved to ${CYAN}/paperclip/bootstrap-ceo-url.txt${RESET}"
+  printf '%s[paperclip-init][BOOTSTRAP SAVED]%s %s/paperclip/bootstrap-ceo-url.txt%s\n' "$GREEN" "$RESET" "$CYAN" "$RESET"
   bootstrap_url="$(printf '%s\n' "$bootstrap_output" | grep -Eo 'https://[^[:space:]]+' | tail -n 1 || true)"
   if [[ -n "$bootstrap_url" ]]; then
     log_url "$bootstrap_url"
